@@ -1,9 +1,18 @@
-```yaml id="f3k9az"
-name: MinimalTest
-on: workflow_dispatch
-jobs:
-  test:
-    runs-on: windows-latest
-    steps:
-      - run: echo "STEP OK"
+```json id="z3x6ps"
+{
+  "name": "JSONTest",
+  "on": {
+    "workflow_dispatch": {}
+  },
+  "jobs": {
+    "test": {
+      "runs-on": "windows-latest",
+      "steps": [
+        {
+          "run": "echo JSON OK"
+        }
+      ]
+    }
+  }
+}
 ```
