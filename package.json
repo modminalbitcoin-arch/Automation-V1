@@ -1,0 +1,33 @@
+{
+"name": "automation-v1",
+"version": "2.0.0",
+"description": "Automation V1 — Meta AI Web + Vibes (Scene 1 only)",
+"main": "src/main.js",
+"scripts": {
+"start": "electron .",
+"build": "electron-builder --win portable --publish never"
+},
+"dependencies": {
+"playwright": "^1.49.0"
+},
+"devDependencies": {
+"electron": "^33.0.0",
+"electron-builder": "^25.1.8"
+},
+"build": {
+"appId": "com.expertvideostudio.automationv1",
+"productName": "Automation-V1",
+"directories": {
+"output": "dist"
+},
+"files": [
+"src/**/*",
+"package.json"
+],
+"asar": true,
+"win": {
+"target": "portable",
+"artifactName": "Automation-V1.exe"
+}
+}
+}
