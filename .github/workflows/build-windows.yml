@@ -1,16 +1,9 @@
-{
-  "name": "JSONTest",
-  "on": {
-    "workflow_dispatch": {}
-  },
-  "jobs": {
-    "test": {
-      "runs-on": "windows-latest",
-      "steps": [
-        {
-          "run": "echo JSON OK"
-        }
-      ]
-    }
-  }
-}
+name: Test
+on: [workflow_dispatch]
+
+jobs:
+test:
+runs-on: windows-latest
+steps:
+- name: Test
+run: echo "YAML OK"
