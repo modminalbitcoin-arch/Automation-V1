@@ -1,5 +1,9 @@
-```yaml
 name: Test
-on: workflow_dispatch
-jobs: {test: {runs-on: windows-latest, steps: [{run: 'echo YAML OK'}]}}
-```
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+      - run: echo "YAML OK"
