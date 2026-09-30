@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<title>Automation V1 — Meta AI Web</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", Tahoma, "Noto Naskh Arabic", Arial, sans-serif;
+    background: #f4f6fb; color: #1a2233;
+    margin: 0; padding: 20px; direction: rtl;
+    -webkit-text-size-adjust: 100%;
+  }
+  h1 { font-size: 22px; margin: 0 0 6px; }
+  .sub { color: #5b6880; font-size: 13px; margin-bottom: 18px; }
+  .card {
+    background: #fff; border: 1px solid #e2e7f0;
+    border-radius: 12px; padding: 16px; margin-bottom: 14px;
+    box-shadow: 0 1px 3px rgba(16,24,40,.05);
+  }
+  .row-between {
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .status-badge {
+    display: inline-block; padding: 4px 12px; border-radius: 20px;
+    font-size: 12px; font-weight: 700;
+    background: #eef2f9; color: #3b4761;
+  }
+  .status-badge.running { background: #fff8e6; color: #8a6d1f; }
+  .status-badge.success { background: #ecfdf5; color: #17864a; }
+  .status-badge.failed  { background: #fef2f2; color: #c02424; }
+  .status-badge.login   { background: #e0e7ff; color: #3730a3; }
+
+  .steps {
+    list-style: none; margin: 10px 0 0; padding: 0; font-size: 14px;
+  }
+  .steps li {
+    padding: 6px 10px; border-bottom: 1px dashed #eef1f7;
+    display: flex; justify-content: space-between;
+  }
+  .steps li:last-child { border-bottom: none; }
+  .steps li .step-name { color: #3b4761; }
+  .steps li .step-status { font-weight: 700; color: #98a2b3; }
+  .steps li.done .step-status { color: #17864a; }
+  .steps li.active .step-status { color: #b45309; }
+  .steps li.error .step-status { color: #c02424; }
+
+  #log {
+    background: #0f172a; color: #d1fae5;
+    font-family: ui-monospace, Consolas, "Courier New", monospace;
+    font-size: 12px; padding: 12px; border-radius: 8px;
+    max-height: 260px; overflow-y: auto;
+    direction: ltr; text-align: left;
+    white-space: pre-wrap; margin-top: 10px;
+  }
+  #log:empty { display: none; }
+
+  .btn {
+    border: none; border-radius: 10px; padding: 12px 24px;
+    font-size: 16px; font-weight: 700; cursor: pointer;
+    background: #2563eb; color: #fff;
+    transition: background .15s;
+    font-family: inherit;
+  }
+  .btn:hover:not(:disabled) { background: #1d4ed8; }
+  .btn:disabled { opacity: .55; cursor: not-allowed; }
+
+  .error-box {
+    background: #fef2f2; border: 1px solid #fecaca;
+    color: #b91c1c; padding: 12px; border-radius: 8px;
+    font-size: 14px; font-weight: 600; margin-top: 10px;
+    white-space: pre-wrap;
+  }
+  .error-box:empty { display: none; }
+
+  .center { text-align: center; }
+</style>
+</head>
+<body>
+
+<h1>🎬 Automation V1 — Meta AI Web</h1>
+<div class="sub">meta.ai + Vibes — Scene 1 فقط</div>
+
+<div class="card">
+  <div class="row-between">
+    <strong>STATUS</strong>
+    <span id="statusBadge" class="status-badge">جاهز</span>
+  </div>
+
+  <ul class="steps" id="steps">
+    <li data-step="1"><span class="step-name">STEP 1: Launching browser</span><span class="step-status">—</span></li>
+    <li data-step="2"><span class="step-name">STEP 2: Opening meta.ai</span><span class="step-status">—</span></li>
+    <li data-step="3"><span class="step-name">STEP 3: Login detection</span><span class="step-status">—</span></li>
+    <li data-step="4"><span class="step-name">STEP 4: Opening Vibes</span><span class="step-status">—</span></li>
+    <li data-step="5"><span class="step-name">STEP 5: Uploading Master Image</span><span class="step-status">—</span></li>
+    <li data-step="6"><span class="step-name">STEP 6: Sending Prompt</span><span class="step-status">—</span></li>
+    <li data-step="7"><span class="step-name">STEP 7: Waiting for video</span><span class="step-status">—</span></li>
+    <li data-step="8"><span class="step-name">STEP 8: Downloading video</span><span class="step-status">—</span></li>
+    <li data-step="9"><span class="step-name">STEP 9: Verifying output</span><span class="step-status">—</span></li>
+  </ul>
+</div>
+
+<div class="card">
+  <div class="row-between">
+    <strong>RESULT</strong>
+    <span id="resultText" class="status-badge">—</span>
+  </div>
+  <div id="errorBox" class="error-box"></div>
+  <div id="log"></div>
+</div>
+
+<div class="card center">
+  <button id="startBtn" class="btn">▶ بدء الأتمتة</button>
+</div>
+
+<script>
+  "use strict";
+
+  const startBtn    = document.getElementById("startBtn");
+  const statusBadge = document.getElementById("statusBadge");
+  const resultText  = document.getElementById("resultText");
+  const errorBox    = document.getElementById("errorBox");
+  const logEl       = document.getElementById("log");
+  const steps       = document.querySelectorAll("#steps li");
+
+  function setStatus(text, cls) {
+    statusBadge.textContent = text;
+    statusBadge.className = "status-badge " + (cls || "");
+  }
+
+  function markStep(num, state) {
+    const li = document.querySelector('#steps li[data-step="' + num + '"]');
+    if (!li) return;
+    li.classList.remove("done", "active", "error");
+    const st = li.querySelector(".step-status");
+    if (!st) return;
+    if (state === "active") { li.classList.add("active"); st.textContent = "⏳"; }
+    else if (state === "done") { li.classList.add("done"); st.textContent = "✓"; }
+    else if (state === "error") { li.classList.add("error"); st.textContent = "✗"; }
+  }
+
+  function resetUI() {
+    logEl.textContent = "";
+    errorBox.textContent = "";
+    resultText.textContent = "—";
+    resultText.className = "status-badge";
+    steps.forEach(function (li) {
+      li.classList.remove("done", "active", "error");
+      const st = li.querySelector(".step-status");
+      if (st) st.textContent = "—";
+    });
+  }
+
+  /* ---------- IPC listeners ---------- */
+  if (window.automationAPI && typeof window.automationAPI.onLog === "function") {
+    window.automationAPI.onLog(function (data) {
+      const step = data && data.step != null ? data.step : "?";
+      const msg  = data && data.msg  != null ? data.msg  : "";
+      logEl.textContent += "[" + step + "] " + msg + "\n";
+      logEl.scrollTop = logEl.scrollHeight;
+
+      const n = parseInt(step, 10);
+      if (!isNaN(n) && n >= 1 && n <= 9) markStep(n, "active");
+      if (!isNaN(n) && n > 1) markStep(n - 1, "done");
+    });
+  }
+
+  if (window.automationAPI && typeof window.automationAPI.onStatus === "function") {
+    window.automationAPI.onStatus(function (s) {
+      switch (s) {
+        case "BROWSER: STARTING":
+          setStatus("⏳ جارٍ التشغيل...", "running"); break;
+        case "META AI WEB: CONNECTING":
+          setStatus("🌐 جارٍ الاتصال بـ Meta AI...", "running"); break;
+        case "META AI WEB: READY":
+          setStatus("✓ Meta AI جاهز", "success"); break;
+        case "LOGIN: CHECKING":
+          setStatus("🔐 جارٍ فحص تسجيل الدخول...", "running"); break;
+        case "LOGIN: WAITING FOR USER":
+          setStatus("🔐 يرجى تسجيل الدخول يدوياً في المتصفح", "login"); break;
+        case "LOGIN: OK":
+          setStatus("✓ تم تسجيل الدخول", "success"); break;
+        case "VIBES: OPENING":
+          setStatus("🎬 جارٍ فتح Vibes...", "running"); break;
+        case "VIBES: READY":
+          setStatus("✓ Vibes جاهز", "success"); break;
+        case "MASTER IMAGE: UPLOADING":
+          setStatus("🖼️ جارٍ رفع الصورة...", "running"); break;
+        case "MASTER IMAGE: UPLOADED":
+          setStatus("✓ تم رفع الصورة", "success"); break;
+        case "PROMPT: LOADED":
+          setStatus("📝 تم تحميل الـPrompt", "running"); break;
+        case "PROMPT: SENT":
+          setStatus("✓ تم إرسال الـPrompt", "success"); break;
+        case "VIDEO GENERATION: WAITING":
+          setStatus("⏳ في انتظار الفيديو...", "running"); break;
+        case "VIDEO: DETECTED":
+          setStatus("✓ تم اكتشاف الفيديو", "success"); break;
+        case "VIDEO: DOWNLOADING":
+          setStatus("⬇️ جارٍ التحميل...", "running"); break;
+        case "DOWNLOAD: COMPLETE":
+          setStatus("✓ تم التحميل", "success"); break;
+        case "OUTPUT: VERIFYING":
+          setStatus("🔍 جارٍ التحقق...", "running"); break;
+        case "SUCCESS":
+          setStatus("✓ تم بنجاح", "success"); break;
+        case "FAILED":
+          setStatus("✗ فشل", "failed"); break;
+        default:
+          break;
+      }
+    });
+  }
+
+  /* ---------- Start button ---------- */
+  startBtn.addEventListener("click", async function () {
+    if (!window.automationAPI || typeof window.automationAPI.start !== "function") {
+      errorBox.textContent = "AUTOMATION FAILED\nREASON = automationAPI غير متاح (preload.js)";
+      setStatus("✗ فشل", "failed");
+      return;
+    }
+
+    startBtn.disabled = true;
+    resetUI();
+    setStatus("⏳ جارٍ التشغيل...", "running");
+
+    try {
+      const result = await window.automationAPI.start();
+
+      if (result && result.finalStatus === "PASS") {
+        setStatus("✓ تم بنجاح", "success");
+        resultText.textContent = "SUCCESS";
+        resultText.className = "status-badge success";
+      } else if (result && result.finalStatus === "CANCELLED") {
+        setStatus("ملغى", "");
+        resultText.textContent = "CANCELLED";
+        resultText.className = "status-badge";
+      } else {
+        setStatus("✗ فشل", "failed");
+        resultText.textContent = "FAILED";
+        resultText.className = "status-badge failed";
+      }
+
+      if (result) {
+        logEl.textContent += "\n=== RESULT ===\n" +
+          "META AI WEB:      " + (result.metaAiWeb     || "—") + "\n" +
+          "VIBES OPEN:       " + (result.vibesOpen     || "—") + "\n" +
+          "LOGIN DETECTED:   " + (result.loginDetected || "—") + "\n" +
+          "MASTER IMAGE:     " + (result.masterImage   || "—") + "\n" +
+          "PROMPT LOAD:      " + (result.promptLoad    || "—") + "\n" +
+          "PROMPT SEND:      " + (result.promptSend    || "—") + "\n" +
+          "VIDEO DETECTED:   " + (result.videoDetected || "—") + "\n" +
+          "VIDEO DOWNLOAD:   " + (result.videoDownload || "—") + "\n" +
+          "OUTPUT FILE:      " + (result.outputFile    || "—") + "\n" +
+          "OUTPUT SIZE:      " + (result.outputSize    || "—") + "\n" +
+          "FINAL STATUS:     " + (result.finalStatus   || "—") + "\n";
+
+        if (result.finalStatus !== "PASS" && result.finalStatus !== "CANCELLED") {
+          if (result.errorStep || result.errorReason) {
+            errorBox.textContent =
+              "AUTOMATION FAILED\n" +
+              "STEP = " + (result.errorStep || "UNKNOWN") + "\n" +
+              "REASON = " + (result.errorReason || "—");
+          }
+        }
+
+        logEl.scrollTop = logEl.scrollHeight;
+      }
+    } catch (err) {
+      setStatus("✗ فشل", "failed");
+      resultText.textContent = "FAILED";
+      resultText.className = "status-badge failed";
+      errorBox.textContent =
+        "AUTOMATION FAILED\n" +
+        "STEP = " + ((err && err.step) ? err.step : "UNKNOWN") + "\n" +
+        "REASON = " + ((err && err.message) ? err.message : String(err));
+
+      if (err && err.step) {
+        const num = parseInt(String(err.step).replace(/\D/g, ""), 10);
+        if (!isNaN(num) && num >= 1 && num <= 9) markStep(num, "error");
+      }
+    } finally {
+      startBtn.disabled = false;
+    }
+  });
+</script>
+</body>
+</html>
