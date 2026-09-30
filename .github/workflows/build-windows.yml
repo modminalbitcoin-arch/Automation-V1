@@ -1,5 +1,9 @@
-```yaml id="q7m3kx"
-name: Test
+```yaml
+name: CheckoutTest
 on: workflow_dispatch
-jobs: {test: {runs-on: windows-latest, steps: [{uses: actions/checkout@v4}]}}
+jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
 ```
