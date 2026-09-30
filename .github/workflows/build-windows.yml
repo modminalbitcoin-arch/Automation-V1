@@ -1,11 +1,17 @@
-name: Build Automation-V1
-
-on:
-workflow_dispatch:
-
-jobs:
-test:
-runs-on: windows-latest
-steps:
-- name: Test
-run: echo "YAML OK"
+{
+"name": "Build Automation-V1",
+"on": {
+"workflow_dispatch": {}
+},
+"jobs": {
+"test": {
+"runs-on": "windows-latest",
+"steps": [
+{
+"name": "Test",
+"run": "echo YAML OK"
+}
+]
+}
+}
+}
