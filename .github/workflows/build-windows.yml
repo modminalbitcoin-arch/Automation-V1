@@ -1,9 +1,3 @@
-name: Test
-on: [workflow_dispatch]
-
-jobs:
-test:
-runs-on: windows-latest
-steps:
-- name: Test
-run: echo "YAML OK"
+name: BuildTest
+on: workflow_dispatch
+jobs: {build: {runs-on: windows-latest, steps: [{run: 'echo YAML OK'}]}}
